@@ -176,10 +176,12 @@ if (active_page == 'thread' || active_page == 'index') {
                 $( '.close-btn' ).trigger( 'click' );
             }
         });
-        $( 'body' ).on( 'keydown', ':not(input, textarea)', function (e) {
+        $( 'body' ).on( 'keydown', function (e) {
             //switch to catelog page when C is pressed
-            if (e.which === 67) {
-                document.location.href = '//'+ document.location.host +'/'+ board_name +'/catalog.html';
+            if (e.target.nodeName !== 'TEXTAREA' && e.target.nodeName !== 'INPUT') {
+                if (e.which === 67) {
+                    document.location.href = '//'+ document.location.host +'/'+ board_name +'/catalog.html';
+                }
             }
         });
         $( 'body' ).on( 'click', '.tf-toolbar a[id]', {formats: formats}, function (e) {
