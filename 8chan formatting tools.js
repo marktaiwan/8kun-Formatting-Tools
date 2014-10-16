@@ -176,7 +176,7 @@ if (active_page == 'thread' || active_page == 'index') {
                 $( '.close-btn' ).trigger( 'click' );
             }
         });
-        $( 'body' ).on( 'keydown', function (e) {
+        $( 'body' ).on( 'keydown', ':not(input, textarea)', function (e) {
             //switch to catelog page when C is pressed
             if (e.which === 67) {
                 document.location.href = '//'+ document.location.host +'/'+ board_name +'/catalog.html';
