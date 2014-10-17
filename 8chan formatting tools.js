@@ -1,16 +1,8 @@
 /*
-format_name: {
-    displayText: 'string',          displays on the toolbar button,
-    altText: 'string',              optional, description for the mouseover tooltip,
-    styleCSS: 'CSS string',         optional, the style to apply on the toolbar button,
-    options: {
-        prefix: 'string',           prepend to selection,
-        suffic: 'string',           append to selection,
-        multiline: true/false,      optional, can span across line breaks, defaults to false
-        exclusiveLine: true/false   optional, the formatted text must be on its own line, defaults to false
-    },
-    shortcutKey: 'string'           optional, assign keyboard shortcut
-}
+8Chan Formatting Tools
+    - Adds a toolbar above the commenting area containing most of 8Chan's formatting options
+    - Press esc to close quick-reply window
+    - Hover cursor over each button to show availiable shortcut
 */
 if (active_page == 'thread' || active_page == 'index') {
     var commentToolFormats = {
@@ -177,13 +169,12 @@ if (active_page == 'thread' || active_page == 'index') {
             }
         });
         $( 'body' ).on( 'keydown', function (e) {
-            //switch to catelog page when C is pressed
             if (e.which === 67 &&
                 e.target.nodeName !== 'INPUT' &&         //The C, the whole C, and nothing but the C
                 e.target.nodeName !== 'TEXTAREA' &&
                 !(e.ctrlKey || e.altKey || e.shiftKey)) {
-                document.location.href = '//'+ document.location.host +'/'+ board_name +'/catalog.html';
-            }
+                    document.location.href = '//'+ document.location.host +'/'+ board_name +'/catalog.html';
+                }
         });
         $( 'body' ).on( 'click', '.tf-toolbar a[id]', {formats: formats}, function (e) {
             //toolbar buttons
