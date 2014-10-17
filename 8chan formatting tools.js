@@ -178,10 +178,11 @@ if (active_page == 'thread' || active_page == 'index') {
         });
         $( 'body' ).on( 'keydown', function (e) {
             //switch to catelog page when C is pressed
-            if (e.target.nodeName !== 'TEXTAREA' && e.target.nodeName !== 'INPUT') {
-                if (e.which === 67) {
-                    document.location.href = '//'+ document.location.host +'/'+ board_name +'/catalog.html';
-                }
+            if (e.which === 67 &&
+                e.target.nodeName !== 'INPUT' &&         //The C, the whole C, and nothing but the C
+                e.target.nodeName !== 'TEXTAREA' &&
+                !(e.ctrlKey || e.altKey || e.shiftKey)) {
+                document.location.href = '//'+ document.location.host +'/'+ board_name +'/catalog.html';
             }
         });
         $( 'body' ).on( 'click', '.tf-toolbar a[id]', {formats: formats}, function (e) {
