@@ -1,251 +1,286 @@
 /*
-8Chan Formatting Tools
-    - Adds a toolbar above the commenting area containing most of 8Chan's formatting options
+8kun Formatting Tools
+Version 2.0.0
+    - Adds a toolbar above the commenting area containing most of 8kun's formatting options
     - Press esc to close quick-reply window
+    - Press c to go to catalog
     - Hover cursor over each button to show availiable shortcut
+
+You can add your own toolbar items by modifying 'const formats', the basic syntax is as follows:
+  format_name: {
+      displayText: 'string',          displays on the toolbar button,
+      altText: 'string',              optional, description for the mouseover tooltip,
+      options: {
+          prefix: 'string',           prepend to selection,
+          suffic: 'string',           append to selection,
+          multiline: true/false,      optional, can span across line breaks, defaults to false
+          exclusiveLine: true/false   optional, the formatted text must be on its own line, defaults to false
+      },
+      edit: 'function'                the function to execute when the button is pressed
+      shortcutKey: 'string'           optional, assign keyboard shortcut
+  }
 */
-if (active_page == 'thread' || active_page == 'index') {
-    var commentToolFormats = {
-        bold: {
-            displayText: 'B',
-            altText: 'bold',
-            styleCSS: 'font-weight: bold;',
-            options: {
-                prefix: "'''",
-                suffix: "'''"
-            },
-            edit: function (box, options) {
-                wrapSelection(box, options);
-            },
-            shortcutKey: 'b'
-        },
-        italics: {
-            displayText: 'i',
-            altText: 'italics',
-            styleCSS: 'font-style: italic;',
-            options: {
-                prefix: "''",
-                suffix: "''"
-            },
-            edit: function (box, options) {
-                wrapSelection(box, options);
-            },
-            shortcutKey: 'i'
-        },
-        under: {
-            displayText: 'U',
-            altText: 'underline',
-            styleCSS: 'text-decoration: underline;',
-            options: {
-                prefix: '__',
-                suffix: '__'
-            },
-            edit: function (box, options) {
-                wrapSelection(box, options);
-            },
-            shortcutKey: 'u'
-        },
-        spoiler: {
-            displayText: 'spoiler',
-            altText: 'mark as spoiler',
-            styleCSS: '',
-            options: {
-                prefix: '[spoiler]',
-                suffix: '[/spoiler]'
-            },
-            edit: function (box, options) {
-                wrapSelection(box, options);
-            },
-            shortcutKey: 's'
-        },
-        code: {
-            displayText: 'code',
-            altText: "code formatting",
-            styleCSS: 'font-family: "Courier New", Courier, monospace;',
-            options: {
-                prefix: '[code]',
-                suffix: '[/code]',
-                multiline: true
-            },
-            edit: function (box, options) {
-                wrapSelection(box, options);
-            }
-        },
-        strike: {
-            displayText: 'strike',
-            altText: 'strikethrough',
-            styleCSS: 'text-decoration: line-through;',
-            options: {
-                prefix: '~~',
-                suffix: '~~'
-            },
-            edit: function (box, options) {
-                wrapSelection(box, options);
-            }
-        },
-        heading: {
-            displayText: 'heading',
-            altText: 'redtext',
-            styleCSS: 'color: #AF0A0F; font-weight: bold;',
-            options: {
-                prefix: '==',
-                suffix: '==',
-                exclusiveLine: true
-            },
-            edit: function (box, options) {
-                wrapSelection(box, options);
-            }
-        }
-    };
-    (function ($, formats) {
-        'use strict';
-        var key, name, altText, ele;
-        var strBuilder = [];
-        var subStr = '';
-        var styleRules = '';
-
-        //generate the HTML for the toolbar
-        for (ele in formats) {
-            if (formats.hasOwnProperty(ele) && formats[ele].displayText != null) {
-                name = formats[ele].displayText;
-                altText = formats[ele].altText || '';
-                key = formats[ele].shortcutKey;
-
-                //add tooltip text
-                if (altText) {
-                    if (key) {
-                        altText += ' (ctrl+'+ key +')';
-                    }
-                    altText = 'title="'+ altText +'"';
-                }
-
-                subStr = '<a href="javascript:void(0)" '+ altText +' id="tf-'+ ele +'">'+ name +'</a>';
-                strBuilder.push(subStr);
-            } else {
-                continue;
-            }
-        }
-
-        $( 'textarea[name="body"]' ).before( '<div class="tf-toolbar"></div>' );
-        $( '.tf-toolbar' ).html( strBuilder.join(' | ') );
-
-        /*  Sets the CSS style
-         */
-        styleRules = '\n/* generated by 8chan Formatting Tools */'+
-                     '\n.tf-toolbar {padding: 0px 5px 1px 5px;}'+
-                     '\n.tf-toolbar :link {text-decoration: none;}';
-            for (ele in formats) {
-                if (formats.hasOwnProperty(ele) && formats[ele].styleCSS) {
-                    styleRules += ' \n#tf-' + ele + ' {' + formats[ele].styleCSS + '}';
-                }
-            }
-            //add CSS rule to user's custom CSS if it exist
-            if ($( '.user-css' ).length !== 0) {
-                $( '.user-css' ).append( styleRules );
-            } else {
-                $( 'body' ).append( '<style>'+ styleRules +'\n</style>' );
-            }
-
-        /*  Attach event listeners
-         */
-        $( 'body' ).on( 'keydown', 'textarea[name="body"]', {formats: formats}, function (e) {
-            //shortcuts
-            if (e.ctrlKey) {
-                var ch = String.fromCharCode(e.which).toLowerCase();
-                var box = e.target;
-                var formats = e.data.formats;
-                for (var ele in formats) {
-                    if (formats.hasOwnProperty(ele) && (ch === formats[ele].shortcutKey)) {
-                        formats[ele].edit(box, formats[ele].options);
-                        e.preventDefault();
-                    }
-                }
-            }
-        });
-        $( 'body' ).on( 'keydown', '#quick-reply textarea[name="body"]', {formats: formats}, function (e) {
-            //close quick reply when esc is prssed
-            if (e.which === 27) {
-                $( '.close-btn' ).trigger( 'click' );
-            }
-        });
-        $( 'body' ).on( 'keydown', function (e) {
-            if (e.which === 67 &&
-                e.target.nodeName !== 'INPUT' &&         //The C, the whole C, and nothing but the C
-                e.target.nodeName !== 'TEXTAREA' &&
-                !(e.ctrlKey || e.altKey || e.shiftKey)) {
-                    document.location.href = '//'+ document.location.host +'/'+ board_name +'/catalog.html';
-                }
-        });
-        $( 'body' ).on( 'click', '.tf-toolbar a[id]', {formats: formats}, function (e) {
-            //toolbar buttons
-            var formats = e.data.formats;
-            var box = $(e.target).parent().next()[0];
-
-            for (var ele in formats) {
-                if (formats.hasOwnProperty(ele) && (e.target.id === 'tf-' + ele)) {
-                    formats[ele].edit(box, formats[ele].options);
-                }
-            }
-        });
-    }(jQuery, commentToolFormats));
-    var wrapSelection = function (box, options) {
-        'use strict';
-        if (box == null) {
-            return;
-        }
-        var prefix = options.prefix;
-        var suffix = options.suffix;
-        var multiline = options.multiline || false;
-        var exclusiveLine = options.exclusiveLine || false;
-
-        //record scroll top to restore it later.
-        var scrollTop = box.scrollTop;
-        var selectionStart = box.selectionStart;
-        var selectionEnd = box.selectionEnd;
-        var text = box.value;
-        var beforeSelection = text.substring(0, selectionStart);
-        var selectedText = text.substring(selectionStart, selectionEnd);
-        var afterSelection = text.substring(selectionEnd);
-
-        var breakSpace = ["\r","\n"];
-        var trailingSpace = "";
-        var cursor = selectedText.length - 1;
-
-        //remove trailing space
-        while (cursor > 0 && selectedText[cursor] === " ") {
-            trailingSpace += " ";
-            cursor--;
-        }
-        selectedText = selectedText.substring(0, cursor + 1);
-
-        if (!multiline) selectedText = selectedText.replace(/(\r|\n|\r\n)/g, suffix +"$1"+ prefix);
-
-        if (exclusiveLine) {
-            // buffer the begining of the selection until a linebreak
-            cursor = beforeSelection.length -1;
-            while (cursor >= 0 && breakSpace.indexOf(beforeSelection.charAt(cursor)) == -1) {
-                cursor--;
-            }
-            selectedText = beforeSelection.substring(cursor +1) + selectedText;
-            beforeSelection = beforeSelection.substring(0, cursor +1);
-            
-            // buffer the end of the selection until a linebreak
-            cursor = 0;
-            while (cursor < afterSelection.length && breakSpace.indexOf(afterSelection.charAt(cursor)) == -1) {
-                cursor++;
-            }
-            selectedText += afterSelection.substring(0, cursor);
-            afterSelection = afterSelection.substring(cursor);
-        }
-
-        box.value = beforeSelection + prefix + selectedText + suffix + trailingSpace + afterSelection;
-
-        box.selectionEnd = beforeSelection.length + prefix.length + selectedText.length;
-        if (selectionStart === selectionEnd) {
-            box.selectionStart = box.selectionEnd;
-        } else {
-            box.selectionStart = beforeSelection.length + prefix.length;
-        }
-        box.scrollTop = scrollTop;
-    };
+(function () {
+'use strict';
+const CSS = `
+/* generated by 8kun Formatting Tools */
+.tf-toolbar {
+  padding: 0px 5px 1px 5px;
 }
+.tf-toolbar :link {
+  text-decoration: none;
+}
+.tf-toolbar a[data-format="bold"] {
+  font-weight: bold;
+}
+.tf-toolbar a[data-format="italics"] {
+  font-style: italic;
+}
+.tf-toolbar a[data-format="under"] {
+  text-decoration underline;
+}
+.tf-toolbar a[data-format="code"] {
+  font-family: "Courier New", Courier, monospace;
+}
+.tf-toolbar a[data-format="strike"] {
+  text-decoration: line-through;
+}
+.tf-toolbar a[data-format="heading"] {
+  color: #AF0A0F; font-weight: bold;
+}
+`;
+const formats = {
+  bold: {
+    displayText: 'B',
+    altText: 'bold',
+    options: {
+      prefix: "'''",
+      suffix: "'''"
+    },
+    edit: function (box, options) {
+      wrapSelection(box, options);
+    },
+    shortcutKey: 'b'
+  },
+  italics: {
+    displayText: 'i',
+    altText: 'italics',
+    options: {
+      prefix: "''",
+      suffix: "''"
+    },
+    edit: function (box, options) {
+      wrapSelection(box, options);
+    },
+    shortcutKey: 'i'
+  },
+  under: {
+    displayText: 'U',
+    altText: 'underline',
+    options: {
+      prefix: '__',
+      suffix: '__'
+    },
+    edit: function (box, options) {
+      wrapSelection(box, options);
+    },
+    shortcutKey: 'u'
+  },
+  spoiler: {
+    displayText: 'spoiler',
+    altText: 'mark as spoiler',
+    options: {
+      prefix: '[spoiler]',
+      suffix: '[/spoiler]'
+    },
+    edit: function (box, options) {
+      wrapSelection(box, options);
+    },
+    shortcutKey: 's'
+  },
+  code: {
+    displayText: 'code',
+    altText: 'code formatting',
+    options: {
+      prefix: '[code]',
+      suffix: '[/code]',
+      multiline: true
+    },
+    edit: function (box, options) {
+      wrapSelection(box, options);
+    }
+  },
+  strike: {
+    displayText: 'strike',
+    altText: 'strikethrough',
+    options: {
+      prefix: '~~',
+      suffix: '~~'
+    },
+    edit: function (box, options) {
+      wrapSelection(box, options);
+    }
+  },
+  heading: {
+    displayText: 'heading',
+    altText: 'redtext',
+    options: {
+      prefix: '==',
+      suffix: '==',
+      exclusiveLine: true
+    },
+    edit: function (box, options) {
+      wrapSelection(box, options);
+    }
+  }
+};
+const $ = (selector, parent = document) => parent.querySelector(selector);
+const initCSS = function () {
+  if ($('style.generated-css')) {
+    const styleElement = $('style.generated-css');
+    styleElement.innerHTML += CSS;
+  } else {
+    const styleElement = document.createElement('style');
+    styleElement.setAttribute('type', 'text/css');
+    styleElement.id = '8kun_formatting_tools_css';
+    styleElement.innerHTML = CSS;
+    document.head.append(styleElement);
+  }
+};
+const wrapSelection = function (box, options) {
+  'use strict';
+  if (box == null) {
+    return;
+  }
+  const {prefix, suffix, multiline = false, exclusiveLine = false} = options;
+
+  // record scroll top to restore it later.
+  const scrollTop = box.scrollTop;
+  const selectionStart = box.selectionStart;
+  const selectionEnd = box.selectionEnd;
+  const text = box.value;
+  const breakSpace = ['\r', '\n'];
+
+  let beforeSelection = text.substring(0, selectionStart);
+  let selectedText = text.substring(selectionStart, selectionEnd);
+  let afterSelection = text.substring(selectionEnd);
+  let trailingSpace = '';
+
+  // remove trailing space
+  let cursor = selectedText.length - 1;
+  while (cursor > 0 && selectedText[cursor] === ' ') {
+    trailingSpace += ' ';
+    cursor--;
+  }
+  selectedText = selectedText.substring(0, cursor + 1);
+
+  if (!multiline) selectedText = selectedText.replace(/(\r|\n|\r\n)/g, suffix + '$1' + prefix);
+
+  if (exclusiveLine) {
+    // buffer the begining of the selection until a linebreak
+    let cursor = beforeSelection.length - 1;
+    while (cursor >= 0 && breakSpace.indexOf(beforeSelection.charAt(cursor)) == -1) {
+      cursor--;
+    }
+    selectedText = beforeSelection.substring(cursor + 1) + selectedText;
+    beforeSelection = beforeSelection.substring(0, cursor + 1);
+
+    // buffer the end of the selection until a linebreak
+    cursor = 0;
+    while (cursor < afterSelection.length && breakSpace.indexOf(afterSelection.charAt(cursor)) == -1) {
+      cursor++;
+    }
+    selectedText += afterSelection.substring(0, cursor);
+    afterSelection = afterSelection.substring(cursor);
+  }
+
+  box.value = beforeSelection + prefix + selectedText + suffix + trailingSpace + afterSelection;
+
+  box.selectionEnd = beforeSelection.length + prefix.length + selectedText.length;
+  if (selectionStart === selectionEnd) {
+    box.selectionStart = box.selectionEnd;
+  } else {
+    box.selectionStart = beforeSelection.length + prefix.length;
+  }
+  box.scrollTop = scrollTop;
+};
+
+/* main */
+if (window.active_page == 'thread' || window.active_page == 'index') {
+  const textarea = $('textarea[name="body"]');
+  if (!textarea) return;
+  initCSS();
+
+  // generate the HTML for the toolbar
+  const strBuilder = [];
+  for (const format in formats) {
+    if (formats.hasOwnProperty(format) && formats[format].displayText != null) {
+      const name = formats[format].displayText;
+      const key = formats[format].shortcutKey;
+
+      // add tooltip text
+      let altText = formats[format].altText || '';
+      if (altText) {
+        if (key) {
+          altText += ` (ctrl+${key})`;
+        }
+        altText = `title="${altText}"`;
+      }
+
+      strBuilder.push(`<a href="javascript:void(0)" ${altText} data-format="${format}">${name}</a>`);
+    }
+  }
+
+  const toolbar = document.createElement('div');
+  toolbar.classList.add('tf-toolbar');
+  toolbar.innerHTML = strBuilder.join(' | ');
+  textarea.parentElement.insertBefore(toolbar, textarea);
+
+  /*  Attach event listeners */
+  // keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    const ele = e.target;
+    if (!ele.matches('textarea[name="body"]')) return;
+    if (e.ctrlKey) {
+      const char = String.fromCharCode(e.which).toLowerCase();
+      for (const ele in formats) {
+        if (formats.hasOwnProperty(ele) && (char === formats[ele].shortcutKey)) {
+          formats[ele].edit(ele, formats[ele].options);
+          e.preventDefault();
+        }
+      }
+    }
+  });
+  // close quick reply when esc is prssed
+  document.addEventListener('keydown', e => {
+    if (e.which == 27 && e.target.matches('#quick-reply textarea[name="body"]')) {
+      $('#quick-reply .close-btn').click();
+    }
+  });
+  // switch to catelog page when C is pressed
+  document.addEventListener('keydown', e => {
+    if (e.which == 67
+      && !e.ctrlKey
+      && !e.altKey
+      && !e.shiftKey
+    ) {
+      document.location.href = '//' + document.location.host + '/' + window.board_name + '/catalog.html';
+    }
+  });
+  // toolbar buttons
+  document.addEventListener('click', e => {
+    if (!e.target.matches('.tf-toolbar a[data-format]')) return;
+    const textbox = $('textarea', e.target.parentElement);
+    const format = e.target.dataset.format;
+    if (format) {
+      const obj = formats[format];
+      obj.edit(textbox, obj.options);
+    }
+    for (const ele in formats) {
+      if (formats.hasOwnProperty(ele) && (e.target.id === 'tf-' + ele)) {
+        formats[ele].edit(textbox, formats[ele].options);
+      }
+    }
+  });
+}
+})();
