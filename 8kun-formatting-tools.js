@@ -135,7 +135,7 @@ const formats = {
   }
 };
 const $ = (selector, parent = document) => parent.querySelector(selector);
-const initCSS = function () {
+function initCSS() {
   if ($('style.generated-css')) {
     const styleElement = $('style.generated-css');
     styleElement.innerHTML += CSS;
@@ -146,8 +146,8 @@ const initCSS = function () {
     styleElement.innerHTML = CSS;
     document.head.append(styleElement);
   }
-};
-const wrapSelection = function (box, options) {
+}
+function wrapSelection(box, options) {
   'use strict';
   if (box == null) {
     return;
@@ -207,80 +207,88 @@ const wrapSelection = function (box, options) {
   }
   box.selectionStart = box.selectionEnd;
   box.scrollTop = scrollTop;
-};
-
-/* main */
-if (window.active_page == 'thread' || window.active_page == 'index') {
-  const textarea = $('textarea[name="body"]');
-  if (!textarea) return;
-  initCSS();
-
-  // generate the HTML for the toolbar
-  const strBuilder = [];
-  for (const format in formats) {
-    if (formats.hasOwnProperty(format) && formats[format].displayText != null) {
-      const name = formats[format].displayText;
-      const key = formats[format].shortcutKey;
-
-      // add tooltip text
-      let altText = formats[format].altText || '';
-      if (altText) {
-        if (key) {
-          altText += ` (ctrl+${key})`;
-        }
-        altText = `title="${altText}"`;
-      }
-
-      strBuilder.push(`<a href="javascript:void(0)" ${altText} data-format="${format}">${name}</a>`);
-    }
-  }
-
-  const toolbar = document.createElement('div');
-  toolbar.classList.add('tf-toolbar');
-  toolbar.innerHTML = strBuilder.join(' | ');
-  textarea.parentElement.insertBefore(toolbar, textarea);
-
-  /*  Attach event listeners */
-  // keyboard shortcuts
-  document.addEventListener('keydown', e => {
-    if (!e.target.matches('textarea[name="body"]')) return;
-    const textbox = e.target;
-    if (e.ctrlKey) {
-      const char = String.fromCharCode(e.which).toLowerCase();
-      for (const prop in formats) {
-        if (char === formats[prop].shortcutKey) {
-          formats[prop].edit(textbox, formats[prop].options);
-          e.preventDefault();
-        }
-      }
-    }
-  });
-  // close quick reply when esc is prssed
-  document.addEventListener('keydown', e => {
-    if (e.which == 27 && e.target.matches('#quick-reply textarea[name="body"]')) {
-      $('#quick-reply .close-btn').click();
-    }
-  });
-  // switch to catelog page when C is pressed
-  document.addEventListener('keydown', e => {
-    if (e.target === document.body
-      && e.which == 67
-      && !e.ctrlKey
-      && !e.altKey
-      && !e.shiftKey
-    ) {
-      document.location.href = '//' + document.location.host + '/' + window.board_name + '/catalog.html';
-    }
-  });
-  // toolbar buttons
-  document.addEventListener('click', e => {
-    if (!e.target.matches('.tf-toolbar a[data-format]')) return;
-    const textbox = $('textarea', e.target.parentElement.parentElement);
-    const format = e.target.dataset.format;
-    if (format) {
-      formats[format].edit(textbox, formats[format].options);
-      textbox.focus();
-    }
-  });
 }
+function main() {
+  if (window.active_page == 'thread' || window.active_page == 'index') {
+    const textarea = $('textarea[name="body"]');
+    if (!textarea) return;
+    initCSS();
+
+    // generate the HTML for the toolbar
+    const strBuilder = [];
+    for (const format in formats) {
+      if (formats.hasOwnProperty(format) && formats[format].displayText != null) {
+        const name = formats[format].displayText;
+        const key = formats[format].shortcutKey;
+
+        // add tooltip text
+        let altText = formats[format].altText || '';
+        if (altText) {
+          if (key) {
+            altText += ` (ctrl+${key})`;
+          }
+          altText = `title="${altText}"`;
+        }
+
+        strBuilder.push(`<a href="javascript:void(0)" ${altText} data-format="${format}">${name}</a>`);
+      }
+    }
+
+    const toolbar = document.createElement('div');
+    toolbar.classList.add('tf-toolbar');
+    toolbar.innerHTML = strBuilder.join(' | ');
+    textarea.parentElement.insertBefore(toolbar, textarea);
+
+    /*  Attach event listeners */
+    // keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      if (!e.target.matches('textarea[name="body"]')) return;
+      const textbox = e.target;
+      if (e.ctrlKey) {
+        const char = String.fromCharCode(e.which).toLowerCase();
+        for (const prop in formats) {
+          if (char === formats[prop].shortcutKey) {
+            formats[prop].edit(textbox, formats[prop].options);
+            e.preventDefault();
+          }
+        }
+      }
+    });
+    // close quick reply when esc is prssed
+    document.addEventListener('keydown', e => {
+      if (e.which == 27 && e.target.matches('#quick-reply textarea[name="body"]')) {
+        $('#quick-reply .close-btn').click();
+      }
+    });
+    // switch to catelog page when C is pressed
+    document.addEventListener('keydown', e => {
+      if (e.target === document.body
+        && e.which == 67
+        && !e.ctrlKey
+        && !e.altKey
+        && !e.shiftKey
+      ) {
+        document.location.href = '//' + document.location.host + '/' + window.board_name + '/catalog.html';
+      }
+    });
+    // toolbar buttons
+    document.addEventListener('click', e => {
+      if (!e.target.matches('.tf-toolbar a[data-format]')) return;
+      const textbox = $('textarea', e.target.parentElement.parentElement);
+      const format = e.target.dataset.format;
+      if (format) {
+        formats[format].edit(textbox, formats[format].options);
+        textbox.focus();
+      }
+    });
+  }
+}
+function onReady(fn) {
+  if (document.readyState == 'loading') {
+    window.addEventListener('DOMContentLoaded', fn);
+  } else {
+    fn();
+  }
+}
+onReady(main);
 })();
