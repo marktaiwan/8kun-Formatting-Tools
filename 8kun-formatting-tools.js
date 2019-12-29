@@ -158,8 +158,9 @@ const wrapSelection = function (box, options) {
   const scrollTop = box.scrollTop;
   const selectionStart = box.selectionStart;
   const selectionEnd = box.selectionEnd;
-  const text = box.value;
   const breakSpace = ['\r', '\n'];
+  const text = box.value;
+  const emptyText = (selectionStart == selectionEnd);
 
   let beforeSelection = text.substring(0, selectionStart);
   let selectedText = text.substring(selectionStart, selectionEnd);
@@ -196,12 +197,15 @@ const wrapSelection = function (box, options) {
 
   box.value = beforeSelection + prefix + selectedText + suffix + trailingSpace + afterSelection;
 
-  box.selectionEnd = beforeSelection.length + prefix.length + selectedText.length;
-  if (selectionStart === selectionEnd) {
-    box.selectionStart = box.selectionEnd;
-  } else {
-    box.selectionStart = beforeSelection.length + prefix.length;
+  // If no text were highlighted, place the caret inside
+  // the formatted section, otherwise place it at the end
+  if (emptyText) {
+    box.selectionEnd = box.value.length - afterSelection.length - suffix.length;
   }
+  else {
+    box.selectionEnd = box.value.length - afterSelection.length;
+  }
+  box.selectionStart = box.selectionEnd;
   box.scrollTop = scrollTop;
 };
 
@@ -239,13 +243,13 @@ if (window.active_page == 'thread' || window.active_page == 'index') {
   /*  Attach event listeners */
   // keyboard shortcuts
   document.addEventListener('keydown', e => {
-    const ele = e.target;
-    if (!ele.matches('textarea[name="body"]')) return;
+    if (!e.target.matches('textarea[name="body"]')) return;
+    const textbox = e.target;
     if (e.ctrlKey) {
       const char = String.fromCharCode(e.which).toLowerCase();
-      for (const ele in formats) {
-        if (formats.hasOwnProperty(ele) && (char === formats[ele].shortcutKey)) {
-          formats[ele].edit(ele, formats[ele].options);
+      for (const prop in formats) {
+        if (char === formats[prop].shortcutKey) {
+          formats[prop].edit(textbox, formats[prop].options);
           e.preventDefault();
         }
       }
@@ -259,7 +263,8 @@ if (window.active_page == 'thread' || window.active_page == 'index') {
   });
   // switch to catelog page when C is pressed
   document.addEventListener('keydown', e => {
-    if (e.which == 67
+    if (e.target === document.body
+      && e.which == 67
       && !e.ctrlKey
       && !e.altKey
       && !e.shiftKey
@@ -270,16 +275,11 @@ if (window.active_page == 'thread' || window.active_page == 'index') {
   // toolbar buttons
   document.addEventListener('click', e => {
     if (!e.target.matches('.tf-toolbar a[data-format]')) return;
-    const textbox = $('textarea', e.target.parentElement);
+    const textbox = $('textarea', e.target.parentElement.parentElement);
     const format = e.target.dataset.format;
     if (format) {
-      const obj = formats[format];
-      obj.edit(textbox, obj.options);
-    }
-    for (const ele in formats) {
-      if (formats.hasOwnProperty(ele) && (e.target.id === 'tf-' + ele)) {
-        formats[ele].edit(textbox, formats[ele].options);
-      }
+      formats[format].edit(textbox, formats[format].options);
+      textbox.focus();
     }
   });
 }
